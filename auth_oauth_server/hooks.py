@@ -5,17 +5,18 @@ from odoo import SUPERUSER_ID, api
 
 
 def post_init_hook(cr, registry):
-    """Pin the issuer to the current base URL and enable client registration.
+    """Pin the issuer to the current base URL.
 
     The issuer is a parameter of its own because ``web.base.url`` is rewritten
     on every administrator login unless frozen, and every change of issuer
     invalidates the access tokens issued so far.
+
+    Dynamic client registration and client metadata documents stay off until
+    an administrator enables them: otherwise anyone could register an
+    application under any name and have users approve it.
     """
     env = api.Environment(cr, SUPERUSER_ID, {})
     params = env["ir.config_parameter"]
     if not params.get_param("auth_oauth_server.issuer"):
         base_url = params.get_param("web.base.url") or ""
         params.set_param("auth_oauth_server.issuer", base_url.rstrip("/"))
-    for key in ("auth_oauth_server.cimd_enabled", "auth_oauth_server.dcr_enabled"):
-        if not params.get_param(key):
-            params.set_param(key, "True")
